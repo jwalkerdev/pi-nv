@@ -70,9 +70,10 @@ try:
         video.truncate(0)
         frame = pygame.surfarray.make_surface(frame)
         scaleVideo = pygame.transform.scale(frame, (480, 320)) # Scales the video to fit the screen
-        flipVideo = pygame.transform.flip(scaleVideo, False, False) # Flip the scaled video horizonatly; args (vide, horiz, vert)
+        #flipVideo = pygame.transform.flip(scaleVideo, False, False) # Flip the scaled video horizonatly; args (vide, horiz, vert)
         screen.fill([0,0,0])
-        screen.blit(flipVideo, (0,0))
+        #screen.blit(flipVideo, (0,0))
+        screen.blit(scaleVideo, (0,0))
         pygame.display.update()
         
         for event in pygame.event.get():
