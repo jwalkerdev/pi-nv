@@ -21,8 +21,8 @@ HDTV: 1280x720, 1920x1080
 
 Parts Used:
     - LCD
-        - Kuman 3.5 inch 320x480 HDMI LCD
-        - interfaces with HDMI port and possible the rpi gpio ports for power
+        - Velleman VMP400 320x480 SPI LCD
+        - interfaces with rpi gpio ports
     - Camera
         - smraza: Camera Module for Raspberry Pi 3 with 5MP 1080p OV5647 Video Webcam
             - https://www.amazon.com/gp/product/B073183KYK
@@ -38,7 +38,12 @@ Parts Used:
                 640 x 480p60/90
 '''
 
+# Frame Buffer Toggle
+use_fbdev = True
 
+# Set SDL / Frame buffer env var
+if use_fbdev:
+    os.environ["SDL_FBDEV"] = "/dev/fb1"
 
 # cam_width = 640
 # cam_height = 480
