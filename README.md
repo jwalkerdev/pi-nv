@@ -11,7 +11,28 @@ Pygame code based on ...
 * https://gist.github.com/radames/f7b46828929c78bd66b5
 
 
-## Pi Setup Steps
+## Install Raspbian Stretch Lite
+
+Write image to SD card with Etcher.
+
+Assuming, the SD gets mounted to /Volumes/boot on the local system (osx for me), run the following commands:
+touch ssh
+touch wpa_supplicant.conf
+(cat <<'END_OF_FILE'
+country=us
+update_config=1
+ctrl_interface=/var/run/wpa_supplicant
+
+network={
+ scan_ssid=1
+ ssid="MyNetworkSSID"
+ psk="ThePassword"
+}
+END_OF_FILE) > wpa_supplicant.conf
+
+
+
+## VMP400 - Pi Setup Steps
 
 Assumes that the picamera and VMP400 LCD display have already been connected to the pi.
 
@@ -61,17 +82,10 @@ sudo picam-to-lcd.py
 
 ## Installing Kuman 3.5in HDMI display
 
+### Waveshare directions (tried these because I couldn't find Kuman docs at first)
 ```bash
-# General instructions
-git clone https://github.com/goodtft/LCD-show.git
-chmod -R 755 LCD-show 
-cd LCD-show/ 
-chmod +x LCD35­-show 
-./LCD35­-show
-
-# Now, I can see the bootup log, but it doesn't show the desktop in raspbian
-
-# So, here are the waveshare directions
+################################################################
+# Waveshare LCD directions
 # https://www.waveshare.com/wiki/3.5inch_HDMI_LCD
 # https://www.waveshare.com/wiki/5inch_HDMI_LCD
 
@@ -90,11 +104,11 @@ mv LCD-show-170703 ~
 mv LCD-show-180817 ~
 ```
 
-## Directions from Kuman doc
+### Directions from Kuman doc
 
-### If not using the raspbian image from the DVD, add the drivers to the PI from the DVD
+#### If not using the raspbian image from the DVD, add the drivers to the PI from the DVD
 
-### Update /boot/config.txt
+#### Update /boot/config.txt
 ```
 hdmi_drive=2
 hdmi_force_hotplug=1
@@ -103,15 +117,33 @@ hdmi_mode=87
 hdmi_cvt 480 320 60 6 0 0 0
 ```
 
-### Install drivers and enable LCD
+Now, reboot the pi
+
+#### Install drivers and enable LCD
 
 ```bash
+# On public network, run this. Otherwise, manually copy the drivers to the pi
+curl -k -O https://www.dropbox.com/s/jrw8bnb4vswo309/LCD-show.tar.gz
+
+# Unpack the file and set permissions
+tar xzf LCD-show.tar.gz
+chmod +x LCD* MPI*show
+
 cd /boot
 cp LCD-show.tar.gz ~
 cd ~
-sudo tar zxvf LCD-show.tar.gz cd LCD-show/
+sudo tar zxvf LCD-show.tar.gz
+cd LCD-show/
 sudo ./MPI3508_480_320-show
 ```
+
+```bash
+# Download rpi_camera_surveillance_system.py
+curl -O -k https://raw.githubusercontent.com/RuiSantosdotme/Random-Nerd-Tutorials/master/Projects/rpi_camera_surveillance_system.py
+# Run it
+python3 rpi_camera_surveillance_system.py
+```
+
 
 ## Pi Zero - Connect with USB cable
 
