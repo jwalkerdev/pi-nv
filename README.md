@@ -16,44 +16,48 @@ Pygame code based on ...
 Write image to SD card with Etcher.
 
 Assuming, the SD gets mounted to /Volumes/boot on the local system (osx for me), run the following commands:
+```bash
 touch ssh
 touch wpa_supplicant.conf
 (cat <<'END_OF_FILE'
 country=us
 update_config=1
 ctrl_interface=/var/run/wpa_supplicant
-
 network={
  scan_ssid=1
  ssid="MyNetworkSSID"
  psk="ThePassword"
 }
-END_OF_FILE) > wpa_supplicant.conf
+END_OF_FILE
+) > wpa_supplicant.conf
+```
 
-
-
-## VMP400 - Pi Setup Steps
-
-Assumes that the picamera and VMP400 LCD display have already been connected to the pi.
-
+## General Setup
 ```bash
 # Update apt-get and install git
 sudo apt-get update
-sudo apt-get upgrade -y
+#sudo apt-get upgrade -y
 sudo apt-get install -y git
+# Install gpiozero for the tools and libs
+sudo apt install python3-gpiozero
+sudo apt install python-gpiozero
+# Run test commands
+pinout
+pinout --monochrome
+# Or forced to be --color, in case you are redirecting to something capable of supporting ANSI codes:
+pinout --color | less -SR
+# Can check pinout for any particular pi version
+# https://elinux.org/RPi_HardwareHistory
+# Ex. check pinout on pi 3B+
+pinout -r a020d3
+# Ex. check pinout on pi zero W
+pinout -r 9000c1
 
 # Get project code
 mkdir -p ~/code
 cd ~/code
 git clone https://github.com/jwalkerdev/pi-nv.git
 cd pi-nv
-
-# Install LCD-show
-sudo rm -rf LCD-show
-git clone https://github.com/goodtft/LCD-show.git
-chmod -R 755 LCD-show
-cd LCD-show/
-sudo ./LCD35-show
 
 # Install tools and libs
 sudo apt-get install -y --fix-missing python-pip 
@@ -65,7 +69,13 @@ sudo apt-get install -y --fix-missing python3-picamera
 sudo apt-get install -y --fix-missing python3-pygame 
 sudo apt-get install -y --fix-missing python3-opencv
 
+sudo apt-get install -y --fix-missing omxplayer vlc
+sudo apt --fix-broken -y install
+sudo apt-get install -y --fix-missing omxplayer vlc
+```
 
+## Optional Pi Setup Steps (used for testing and misc tasks)
+```bash
 # Insert usb drive with files if one is needed
 mkdir -p /mnt/usb
 mount /dev/sda1 /mnt/usb
@@ -80,29 +90,27 @@ sudo python opencv_video_to_pygame_raspberry_pi.py
 sudo picam-to-lcd.py
 ```
 
-## Installing Kuman 3.5in HDMI display
-
-### Waveshare directions (tried these because I couldn't find Kuman docs at first)
 ```bash
-################################################################
-# Waveshare LCD directions
-# https://www.waveshare.com/wiki/3.5inch_HDMI_LCD
-# https://www.waveshare.com/wiki/5inch_HDMI_LCD
-
-cd /tmp
-
-# This driver is for Raspbian after 180303 version. Network connection is required when installing.
-curl -k -O https://www.waveshare.com/w/upload/1/1e/LCD-show-180817.tar.gz
-tar xzf LCD-show-180817.tar.gz
-mv LCD-show LCD-show-180817
-# If you want to use Raspbian Lite version or switch to Console mode, please download this driver instead
-curl -k -O https://www.waveshare.com/w/upload/0/00/LCD-show-170703.tar.gz
-tar xzf LCD-show-170703.tar.gz
-mv LCD-show LCD-show-170703
-
-mv LCD-show-170703 ~
-mv LCD-show-180817 ~
+# Download rpi_camera_surveillance_system.py
+curl -O -k https://raw.githubusercontent.com/RuiSantosdotme/Random-Nerd-Tutorials/master/Projects/rpi_camera_surveillance_system.py
+# Run it
+python3 rpi_camera_surveillance_system.py
 ```
+
+## VMP400 - Pi Setup Steps
+
+Assumes that the picamera and VMP400 LCD display have already been connected to the pi.
+
+```bash
+# Install LCD-show
+sudo rm -rf LCD-show
+git clone https://github.com/goodtft/LCD-show.git
+chmod -R 755 LCD-show
+cd LCD-show/
+sudo ./LCD35-show
+```
+
+## Installing Kuman 3.5in HDMI display
 
 ### Directions from Kuman doc
 
@@ -127,21 +135,31 @@ curl -k -O https://www.dropbox.com/s/jrw8bnb4vswo309/LCD-show.tar.gz
 
 # Unpack the file and set permissions
 tar xzf LCD-show.tar.gz
+cd LCD-show
 chmod +x LCD* MPI*show
-
-cd /boot
-cp LCD-show.tar.gz ~
-cd ~
-sudo tar zxvf LCD-show.tar.gz
-cd LCD-show/
 sudo ./MPI3508_480_320-show
 ```
 
+### Waveshare directions (tried these because I couldn't find Kuman docs at first)
 ```bash
-# Download rpi_camera_surveillance_system.py
-curl -O -k https://raw.githubusercontent.com/RuiSantosdotme/Random-Nerd-Tutorials/master/Projects/rpi_camera_surveillance_system.py
-# Run it
-python3 rpi_camera_surveillance_system.py
+################################################################
+# Waveshare LCD directions
+# https://www.waveshare.com/wiki/3.5inch_HDMI_LCD
+# https://www.waveshare.com/wiki/5inch_HDMI_LCD
+
+cd /tmp
+
+# This driver is for Raspbian after 180303 version. Network connection is required when installing.
+curl -k -O https://www.waveshare.com/w/upload/1/1e/LCD-show-180817.tar.gz
+tar xzf LCD-show-180817.tar.gz
+mv LCD-show LCD-show-180817
+# If you want to use Raspbian Lite version or switch to Console mode, please download this driver instead
+curl -k -O https://www.waveshare.com/w/upload/0/00/LCD-show-170703.tar.gz
+tar xzf LCD-show-170703.tar.gz
+mv LCD-show LCD-show-170703
+
+mv LCD-show-170703 ~
+mv LCD-show-180817 ~
 ```
 
 
@@ -177,3 +195,12 @@ This will supply power to the pi zero and will also create a data connection.
 
 `iwgetid` - get SSID of currently connected wifi connection
 `iwconfig` - display or configure wifi
+
+
+## Lipo Battery Info
+
+A profile of the voltage for a 'classic' 3.7V/4.2V battery. The voltage starts at 4.2 maximum and quickly drops down to about 3.7V for the majority of the battery life. Once you hit 3.4V the battery is dead and at 3.0V the cutoff circuitry disconnects the battery (more on that later.
+
+https://learn.adafruit.com/li-ion-and-lipoly-batteries/voltages
+
+https://learn.adafruit.com/assets/979
