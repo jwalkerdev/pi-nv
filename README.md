@@ -38,9 +38,14 @@ END_OF_FILE
 sudo apt-get update
 #sudo apt-get upgrade -y
 sudo apt-get install -y git
+# Install pip
+sudo apt-get install -y python-pip python3-pip
+
+# Install RPi.GPIO
+sudo apt-get install -y python-dev python-rpi.gpio python3-dev python3-rpi.gpio
 # Install gpiozero for the tools and libs
-sudo apt install python3-gpiozero
-sudo apt install python-gpiozero
+sudo apt-get install -y python-gpiozero python3-gpiozero
+
 # Run test commands
 pinout
 pinout --monochrome
@@ -57,6 +62,7 @@ pinout -r 9000c1
 mkdir -p ~/code
 cd ~/code
 git clone https://github.com/jwalkerdev/pi-nv.git
+git clone
 cd pi-nv
 
 # Install tools and libs
@@ -204,3 +210,17 @@ A profile of the voltage for a 'classic' 3.7V/4.2V battery. The voltage starts a
 https://learn.adafruit.com/li-ion-and-lipoly-batteries/voltages
 
 https://learn.adafruit.com/assets/979
+
+
+## ADC0832 Info
+* http://wiki.sunfounder.cc/index.php?title=AD_Converter-ADC0832_Module
+    * NOTE: This module is not the actual ADC0832. It is built around it. In particular, note that this board uses a single pin for the Input and Output pins of Microwire protocol used by the chip
+* http://wiki.sunfounder.cc/images/1/1e/ADC0832_datasheet.pdf
+* https://github.com/sunfounder/Sunfounder_SensorKit_Python_code_for_RaspberryPi/blob/master/ADC0832.py
+* https://github.com/sahithyen/RPI_ADC0832
+* https://gist.github.com/HeinrichHartmann/27f33798d12317575c6c
+
+Pull-down resistors in any final connections that have floating values could be beneficial
+
+## Miscellaneous Reference Material
+* http://github.com/adafruit/Adafruit-Raspberry-Pi-Python-Code
