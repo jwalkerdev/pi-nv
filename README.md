@@ -11,6 +11,24 @@ Pygame code based on ...
 * https://gist.github.com/radames/f7b46828929c78bd66b5
 
 
+## URLs to review for pygame and camera uis
+
+https://www.digikey.com/en/maker/blogs/2018/the-best-gui-widgets-for-raspberry-pi
+https://github.com/local-vision/Pi-Vision
+https://github.com/Billwilliams1952/PiCameraApp/blob/master/Source/PiCameraApp.py
+http://idlelogiclabs.com/2016/10/10/raspberry-pi-3-camera-windowed-preview/
+https://www.tutorialspoint.com/wxpython/wxpython_hello_world.htm
+https://pypi.org/project/wxPython/
+https://wiki.wxpython.org/
+https://www.raspberrypi.org/forums/viewtopic.php?p=374577
+https://github.com/sixbacon/RPICameraGUI
+https://www.tutorialspoint.com/python/python_gui_programming.htm
+https://www.datacamp.com/community/tutorials/gui-tkinter-python
+https://www.geeksforgeeks.org/python-gui-tkinter/
+https://docs.wxwidgets.org/3.1/overview_python.html
+https://projects.raspberrypi.org/en/projects/getting-started-with-guis
+
+
 ## Install Raspbian Stretch Lite
 
 Write image to SD card with Etcher.
