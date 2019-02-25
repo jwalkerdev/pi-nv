@@ -46,19 +46,24 @@ screen_height = 320
 pygame.init()
 pygame.display.set_caption("OpenCV camera stream on Pygame")
 
+if pygame.display.Info().current_w < 500:
+    ui_panel_size = 80
+else:
+    ui_panel_size = pygame.display.Info().current_w * 20 / 100
+
 fullscreen_bool = True
 if fullscreen_bool:
     # FULLSCREEN
-    screen_size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+    screen_size = (pygame.display.Info().current_w - ui_panel_size, pygame.display.Info().current_h)
     screen = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
 else:
     # Specific Screen Size
-    screen_size = (screen_width, screen_height)
+    screen_size = (screen_width - ui_panel_size, screen_height)
     screen = pygame.display.set_mode(screen_size)
 
 camera = picamera.PiCamera()
 camera.hflip = True # Flip the video from the camera
-camera.framerate = 30 # Frame rate
+#camera.framerate = 30 # Frame rate
 camera.exposure_mode = 'night'
 camera.resolution = screen_size
 video = picamera.array.PiRGBArray(camera)
@@ -68,13 +73,14 @@ try:
         frame = np.rot90(frameBuf.array)        
         video.truncate(0)
         frame = pygame.surfarray.make_surface(frame)
-        screen.fill([0,0,0])
+        screen.fill([ui_panel_size,0,0])
         screen.blit(frame, (0,0))
         pygame.display.update()
         
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                     raise KeyboardInterrupt
+
 except KeyboardInterrupt,SystemExit:
     pygame.quit()
     cv2.destroyAllWindows()
