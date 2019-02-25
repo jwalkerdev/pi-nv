@@ -43,13 +43,21 @@ os.environ["SDL_FBDEV"] = "/dev/fb1"
 screen_width = 480
 screen_height = 320
 
-camera = picamera.PiCamera()
-camera.resolution = (screen_width, screen_height)
-
 pygame.init()
 pygame.display.set_caption("OpenCV camera stream on Pygame")
 
-screen = pygame.display.set_mode([screen_width, screen_height])
+fullscreen_bool = True
+if fullscreen_bool:
+    # FULLSCREEN
+    screen_size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+    screen = pygame.display.set_mode(screen_size, pygame.FULLSCREEN)
+else:
+    # Specific Screen Size
+    screen_size = (screen_width, screen_height)
+    screen = pygame.display.set_mode(screen_size)
+
+camera = picamera.PiCamera()
+camera.resolution = screen_size
 video = picamera.array.PiRGBArray(camera)
 
 try:
