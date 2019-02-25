@@ -57,6 +57,9 @@ else:
     screen = pygame.display.set_mode(screen_size)
 
 camera = picamera.PiCamera()
+camera.hflip = True # Flip the video from the camera
+camera.framerate = 30 # Frame rate
+camera.exposure_mode = 'night'
 camera.resolution = screen_size
 video = picamera.array.PiRGBArray(camera)
 
