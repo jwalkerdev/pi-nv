@@ -155,7 +155,7 @@ Now, reboot the pi
 
 ```bash
 # On public network, run this. Otherwise, manually copy the drivers to the pi
-curl -k -O https://www.dropbox.com/s/jrw8bnb4vswo309/LCD-show.tar.gz
+curl -L -k -O https://www.dropbox.com/s/jrw8bnb4vswo309/LCD-show.tar.gz
 
 # Unpack the file and set permissions
 tar xzf LCD-show.tar.gz
