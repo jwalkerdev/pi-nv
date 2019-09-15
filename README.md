@@ -29,9 +29,9 @@ https://docs.wxwidgets.org/3.1/overview_python.html
 https://projects.raspberrypi.org/en/projects/getting-started-with-guis
 
 
-## Install Raspbian Stretch Lite
+## Install Raspbian Lite
 
-Write image to SD card with Etcher.
+Write image to SD card with Etcher / Balena Etcher.
 
 Assuming, the SD gets mounted to /Volumes/boot on the local system (osx for me), run the following commands:
 ```bash
@@ -115,6 +115,7 @@ sudo picam-to-lcd.py
 ```
 
 ```bash
+cd code
 # Download rpi_camera_surveillance_system.py
 curl -O -k https://raw.githubusercontent.com/RuiSantosdotme/Random-Nerd-Tutorials/master/Projects/rpi_camera_surveillance_system.py
 # Run it
