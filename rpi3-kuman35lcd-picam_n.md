@@ -28,8 +28,18 @@ Find the raspberry pi on the network
 ssh to it.
 `ssh pi@ip_address`
 
+Change the language, keyboard lang, and wifi lang if you'd like.
+
 ## Change the password for the pi user
 `passwd`
+
+## Add Startup/Shutdown button
+
+Since WAKE_ON_GPIO is enabled in most RPI firmware by default, shorting GPIO3 (pin 5) to GND will wake the pi from sleep or power-off.  By enabling the gpio-shutdown overlay, you can have a single button connected between pin 5 and pin 6 to get a single Start/Shutdown button.
+https://www.raspberrypi.org/forums/viewtopic.php?t=197495
+
+Add the following line to /boot/config.txt"
+`dtoverlay=gpio-shutdown,gpio_pin=3`  // gpio3 is the default pin for this overlay
 
 ### General Setup
 ```bash
@@ -94,9 +104,48 @@ chmod +x LCD* MPI*show
 sudo ./MPI3508_480_320-show
 ```
 
-## Enable the camera
+### Enable the camera
 
 Login to the pi
 Run `sudo raspi-config`
 Enable the camera
 Reboot the pi
+
+
+### Wake the screen from the command line if screensaver is enabled
+https://superuser.com/questions/942228/screen-saver-on-and-off-at-raspberry-pi-script-in-python
+
+Install the x11-xserver-utils package to get the xset command. Then you can use it to force the DPMS signals to the monitor to on or off. You may need to set the DISPLAY variable in the environment. Eg:
+
+DISPLAY=:0 xset dpms force on
+sleep 10
+DISPLAY=:0 xset dpms force off
+
+You can do something like this in python. Poll every second. Remember if you have set the display on or off. Note the time-of-day whenever your signal is active. When the time since last active is over 2 minutes, switch display off. Loosely:
+
+import os, subprocess, time
+os.environ['DISPLAY'] = ":0"
+
+displayison = False
+maxidle = 2*60 # seconds
+lastsignaled = 0
+while True:
+    now = time.time()
+    if GPIO.input(PIR):
+        if not displayison:
+            subprocess.call('xset dpms force on', shell=True)
+            displayison = True
+        lastsignaled = now
+    else:
+        if now-lastsignaled > maxidle:
+            if displayison:
+                subprocess.call('xset dpms force off', shell=True)
+                displayison = False
+    time.sleep(1)
+
+If you are interacting with the screen, and want it to stay on during this time independently of your gpio, you are probably better off letting the standard X11 idle mechanism detect that 2 minutes idle have elapsed and so automatically switching the screen off. Just use your program to force the screen on.
+
+You can set a 120 second idle timeout with a single call of:
+
+xset dpms 120 120 120
+and can then remove the force off from the python.

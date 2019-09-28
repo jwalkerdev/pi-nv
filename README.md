@@ -3,12 +3,18 @@
 
 References:
 * https://hackaday.io/project/27544-night-vision-camera-raspberry-pi/details
+    * https://hackaday.io/project/27544-night-vision-camera-raspberry-pi
+    * https://github.com/facelessloser/night_vision_pi/blob/master/camera_app/camera.py
+* Referenced by the hackaday project https://gist.github.com/radames/f7b46828929c78bd66b5
+
 
 Pygame code based on ...
 * https://learn.adafruit.com/pi-video-output-using-pygame?view=all
     * https://learn.adafruit.com/pages/697/elements/83233/download (pyscope.py)
     * https://learn.adafruit.com/pages/699/elements/83276/download (pyscope-animated.py)
 * https://gist.github.com/radames/f7b46828929c78bd66b5
+* https://github.com/adafruit/adafruit-pi-cam
+* https://github.com/facelessloser/night_vision_pi/blob/master/camera_app/camera.py
 
 
 ## URLs to review for pygame and camera uis

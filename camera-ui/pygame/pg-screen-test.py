@@ -1,20 +1,23 @@
 # Basic pygame template
 
-
+import os
 import pygame
 from pygame.locals import *
+
+# Either find the correct framebuffer device (/dev/fb0 or /dev/fb1) and set 
+#   it here or set it as an env variable.
+# Before running, on command line, set env var DISPLAY. Run `export DISPLAY=0:0`
+#   or set it here.
+os.environ["SDL_FBDEV"] = "/dev/fb0"
 
 def main():
 
     "Ininitializes a new pygame screen using the framebuffer"
-
-    os.environ["SDL_FBDEV"] = "/dev/fb1"
-
     # Based on "Python GUI in Linux frame buffer"
     # http://www.karoltomala.com/blog/?p=679
     disp_no = os.getenv("DISPLAY")
     if disp_no:
-        print "I'm running under X display = {0}".format(disp_no)
+        print ("I'm running under X display = {0}".format(disp_no))
     
     # Check which frame buffer drivers are available
     # Start with fbcon since directfb hangs with composite output
@@ -27,18 +30,18 @@ def main():
         try:
             pygame.display.init()
         except pygame.error:
-            print 'Driver: {0} failed.'.format(driver)
+            print('Driver: {0} failed.'.format(driver))
             continue
         found = True
         break
 
     if not found:
-        raise Exception('No suitable video driver found!')}
+        raise Exception('No suitable video driver found!')
 
 
     # Initialise screen
     pygame.init()
-    screen = pygame.display.set_mode((150, 50))
+    screen = pygame.display.set_mode((150, 50), pygame.FULLSCREEN)
     pygame.display.set_caption('Basic Pygame program')
 
     # Fill background
@@ -68,7 +71,7 @@ def main():
                     running = False
 
         screen.blit(background, (0, 0))
-        pygame.display.flip()
+        pygame.display.update()
 
 
 if __name__ == '__main__': main()
