@@ -60,12 +60,11 @@ pinout -r 9000c1
 
 # Install tools and libs
 #sudo apt-get install -y --fix-missing python3-pip 
-sudo apt-get install -y --fix-missing python3-picamera
-sudo apt-get install -y --fix-missing python3-pygame
-sudo apt-get install -y --fix-missing python3-opencv
+sudo apt-get install -y --fix-missing python3-picamera python3-pygame python3-opencv
 # sudo apt -y --fix-broken install
 # sudo apt-get install -y --fix-missing python3-pygame
 # sudo apt-get install -y --fix-missing python3-opencv
+
 
 # Prepare code directory for project code
 mkdir -p ~/code

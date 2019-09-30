@@ -3,6 +3,7 @@ from pygame.locals import *
 import cv2
 import numpy as np
 import datetime
+import os
 
 ### Doc
 '''
@@ -57,20 +58,7 @@ How to get Native screen resolution:
     pygame.display.set_mode((infoObject.current_w, infoObject.current_h))
 '''
 
-# Either find the correct framebuffer device (/dev/fb0 or /dev/fb1) and set 
-#   it here or set it as an env variable.
-# Before running, on command line, set env var DISPLAY. Run `export DISPLAY=0:0`
-#   or set it here.
-os.environ["SDL_FBDEV"] = "/dev/fb0"
-
-# Get native display info before running first display.set_mode()
-infoObject = pygame.display.Info()
-native_res_w = infoObject.current_w
-native_res_h = infoObject.current_h
-native_res = (native_res_w, native_res_h)
-
 # Initialize potential screen sizes
-
 res_dvd = (720, 480)
 res_720p = (1280, 720)
 res_1080p = (1920 ,1080)
@@ -80,7 +68,11 @@ res_pal = (720,405)  # (16/9)
 res_hdtv = (1280,720) 
 res_hdtv2 = (1920,1080)
 
-# Initialize fonts
+# Either find the correct framebuffer device (/dev/fb0 or /dev/fb1) and set 
+#   it here or set it as an env variable.
+# Before running, on command line, set env var DISPLAY. Run `export DISPLAY=0:0`
+#   or set it here.
+os.environ["SDL_FBDEV"] = "/dev/fb0"
 
 def main():
 
@@ -93,32 +85,32 @@ def main():
     
     # Check which frame buffer drivers are available
     # Start with fbcon since directfb hangs with composite output
-    drivers = ['fbcon', 'directfb', 'svgalib']
-    found = False
-    for driver in drivers:
-        # Make sure that SDL_VIDEODRIVER is set
-        if not os.getenv('SDL_VIDEODRIVER'):
-            os.putenv('SDL_VIDEODRIVER', driver)
-        try:
-            pygame.display.init()
-        except pygame.error:
-            print('Driver: {0} failed.'.format(driver))
-            continue
-        found = True
-        break
+    # drivers = ['fbcon', 'directfb', 'svgalib']
+    # found = False
+    # for driver in drivers:
+    #     # Make sure that SDL_VIDEODRIVER is set
+    #     if not os.getenv('SDL_VIDEODRIVER'):
+    #         os.putenv('SDL_VIDEODRIVER', driver)
+    #     try:
+    #         pygame.display.init()
+    #     except pygame.error:
+    #         print('Driver: {0} failed.'.format(driver))
+    #         continue
+    #     found = True
+    #     break
 
-    if not found:
-        raise Exception('No suitable video driver found!')
-
-    size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
-    print "Framebuffer size: %d x %d" % (size[0], size[1])
-    self.screen = pygame.display.set_mode(size, pygame.FULLSCREEN)
+    # if not found:
+    #     raise Exception('No suitable video driver found!')
 
 
-
-    # Initialise screen
+    # Initialize screen
     pygame.init()
-    screen = pygame.display.set_mode((800, 800), RESIZABLE)
+
+    # Get native display info before running first display.set_mode()    
+    size = (pygame.display.Info().current_w, pygame.display.Info().current_h)
+    print("Framebuffer size: %d x %d" % (size[0], size[1]))
+
+    screen = pygame.display.set_mode((800, 600), RESIZABLE)
     pygame.display.set_caption('MJPEG live feed')
 
     # Fill background
@@ -142,7 +134,7 @@ def main():
 
     # Initialize stream capture
     #cap = cv2.VideoCapture('http://72.48.231.13/mjpg/video.mjpg')
-    cap = cv2.VideoCapture('http://192.168.1.36/stream.mjpg')
+    cap = cv2.VideoCapture('http://192.168.1.36:8000/stream.mjpg')
     ret, frame = cap.read()
  
     frame_size = ''

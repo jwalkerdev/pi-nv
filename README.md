@@ -128,6 +128,17 @@ curl -O -k https://raw.githubusercontent.com/RuiSantosdotme/Random-Nerd-Tutorial
 python3 rpi_camera_surveillance_system.py
 ```
 
+Common Resolutions:
+res_dvd = (720, 480)
+res_720p = (1280, 720)
+res_1080p = (1920 ,1080)
+res_ultraHD_4k = (3840, 2160)
+res_ntsc = (640,360)  # (16/9)
+res_pal = (720,405)  # (16/9)
+res_hdtv = (1280,720) 
+res_hdtv2 = (1920,1080)
+
+
 ## VMP400 - Pi Setup Steps
 
 Assumes that the picamera and VMP400 LCD display have already been connected to the pi.
