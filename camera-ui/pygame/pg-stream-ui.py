@@ -13,11 +13,12 @@ Tall thin left panel: Leftmost 10-20% of screen
 Remaining screen used for video display
 
 Todo:
-* Implement video start/stop buttons
-* Implement video transform to fill viewing area
-* Implement button visual change when pressed
-* Implement brightness slider
+* Done - Implement video start/stop buttons
+* Done - Implement video transform to fill viewing area
+* Done (could be improved) - Implement button visual change when pressed
+* Add argparse to pass in the stream url and other options.
 * Update component to scale out if resolution is greater than a certain size.
+* Implement brightness slider
 * Use timeit to verify some different methods of retrieving and displaying video.
     https://pythonhow.com/measure-execution-time-python-code/
     https://docs.python.org/2/library/timeit.html
@@ -113,15 +114,6 @@ def main():
     # Run event loop
     event_loop()
 
-
-'''
-Create Button with callback
-    startstop_video_btn_pressed
-        toggle_capture_onoff - toggle whether video capture is enabled or disabled.
-        toggle_button_text
-
-Process all events so that components can do internal updates.
-'''
 
 def btnStartStop_callback():
     if mjpeg_viewer is None or btnStartStop is None:
