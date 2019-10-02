@@ -4,6 +4,7 @@ from pygame.locals import *
 import cv2
 import numpy as np
 import datetime
+import math
 
 '''
 UI Layout:
@@ -13,7 +14,9 @@ Remaining screen used for video display
 
 Todo:
 * Implement video start/stop buttons
+* Implement video transform to fill viewing area
 * Implement button visual change when pressed
+* Implement brightness slider
 * Update component to scale out if resolution is greater than a certain size.
 * Use timeit to verify some different methods of retrieving and displaying video.
     https://pythonhow.com/measure-execution-time-python-code/
@@ -34,7 +37,7 @@ https://learn.adafruit.com/pages/697/elements/83233/download (pyscope.py)
 https://github.com/adafruit/adafruit-pi-cam
 '''
 
-# Either find the correct framebuffer device (/dev/fb0 or /dev/fb1) and set 
+# Either find the correct framebuffer device (/dev/fb0 or /dev/fb1) and set
 #   it here or set it as an env variable.
 # Before running, on command line, set env var DISPLAY. Run `export DISPLAY=0:0` or `export DISPLAY=:0`
 #   or set it here.
@@ -71,12 +74,14 @@ BRIGHT_RED = (255,0,0)
 BRIGHT_GREEN = (0,255,0)
 BRIGHTISH_GREEN = (30,230,30)
 
+btnStartStop = None
+mjpeg_viewer = None
 
 def main():
-    global screen, clock
+    global screen, clock, btnStartStop, mjpeg_viewer
     "Ininitializes a new pygame screen using the framebuffer"
     verify_drivers()   # Configure and verify any rqeuired drivers
-    
+
     # Initialize clock
     clock = pygame.time.Clock()
 
@@ -90,31 +95,43 @@ def main():
     pygame.display.flip()
 
     # Add components
-    
+
     # Add MJPEG stream viewer
     #   Ex. Safe public mjpeg stream for testing:  http://72.48.231.13/mjpg/video.mjpg
     viewer_rect = pygame.Rect(50,0,s_width-50,s_height)
     a_url = r'http://192.168.1.36:8000/stream.mjpg'
-    viewer_obj = MJPEGStreamViewer(viewer_rect, a_url)
-    components.append(viewer_obj)
-    
-    # Add TextLabel
-    # label_rect1 = pygame.Rect(4,4,40,20)
-    # components.append(TextLabel(label_rect1,text="Label"))
-    
+    mjpeg_viewer = MJPEGStreamViewer(viewer_rect, a_url)
+    components.append(mjpeg_viewer)
+
     # Add Start Button
     btn_rect1 = pygame.Rect(4,4,40,20)
-    btn1 = Button(btn_rect1,text="Start")
-    components.append(btn1)
-    event_consumers.append(btn1)
-    # Add Stop Button
-    btn_rect2 = pygame.Rect(4,30,40,20)
-    btn2 = Button(btn_rect2,text="Stop")
-    components.append(btn2)
-    event_consumers.append(btn2)
-    
+    initial_text = "Stop" if mjpeg_viewer.get_running() == True else "Start"
+    btnStartStop = Button(btn_rect1,text=initial_text, callback=btnStartStop_callback)
+    components.append(btnStartStop)
+    event_consumers.append(btnStartStop)
+
     # Run event loop
     event_loop()
+
+
+'''
+Create Button with callback
+    startstop_video_btn_pressed
+        toggle_capture_onoff - toggle whether video capture is enabled or disabled.
+        toggle_button_text
+
+Process all events so that components can do internal updates.
+'''
+
+def btnStartStop_callback():
+    if mjpeg_viewer is None or btnStartStop is None:
+        return
+    mjpeg_viewer.set_running(not mjpeg_viewer.get_running())
+    running = mjpeg_viewer.get_running()
+    if running:
+        btnStartStop.set_text("Stop")
+    else:
+        btnStartStop.set_text("Start")
 
 
 def event_loop():
@@ -129,72 +146,77 @@ def event_loop():
                     running = False
             for ec in event_consumers:
                 ec.check_event(event)
-                if btn1.clicked:
-                    btn1.drawborder = 
-                    btn2.drawborder 
+
 
         for c in components:
             c.draw()
         pygame.display.update()
-        clock.tick(24)
+        clock.tick(30)
 
 
 class MJPEGStreamViewer:
-    def __init__(self, rect, stream_url):
+    '''
+        MJPEGStreamViewer class
+        Expand video frame width to fill self.rect maximally and scale height by same scale factor.
+    '''
+    def __init__(self, rect, stream_url, **kwargs):
         self.noframe_count = 0
         self.rect = rect
         self.stream_url = stream_url
+        self.capture_enabled = True
+        if kwargs:
+            for key, value in kwargs.items():
+                if   key == 'capture_enabled' : self.capture_enabled = value
+
         # Initialize stream capture
         self.cap = cv2.VideoCapture(stream_url)
         if not self.cap.isOpened():
             print("Failure opening stream - {}.".format(stream_url))
-
-    def draw(self):
-        # Get and display MJPEG frame
-        ret, frame = self.cap.read()
-        if frame is None:
-            self.noframe_count = self.noframe_count + 1
-        else:
-            self.noframe_count = 0
-            # print("{} - frame read - {}".format(datetime.datetime.now(), ret))
-            frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-            frame = frame.swapaxes(0,1)   # replaces np.rot90(frame)
-            #frame = pygame.transform.scale(frame,(800,600))
-            frame = pygame.surfarray.make_surface(frame)
-            frame_size = frame.get_size()
-            screen.blit(frame, self.rect, self.rect)
-           
-
-class TextLabel:
-    ''' Simple TextLabel class:  rect, label text, color, bgcolor'''
-    def __init__(self, rect, **kwargs):
-        self.rect   = rect              # Boundary rect surface
-        self.color   = (10,10,10)       # text color
-        self.bgcolor = BRIGHTISH_GREEN  # bg color
-        self.text   = '>'               # text
-        if kwargs:
-            for key, value in kwargs.items():
-                if   key == 'color'   : self.color    = value
-                elif key == 'bgcolor' : self.bgcolor  = value
-                elif key == 'text'    : self.text     = value
-        # Create font
-        self.font = pygame.font.Font(None, 16)
-        # Create and fill label background surface
+            self.capture_enabled = False
+        # Initialize font for stopped capture
+        self.font = pygame.font.Font(None, int(self.rect.width / 12))
+        # Create background surface
         self.bg = pygame.Surface((self.rect.width, self.rect.height)).convert()
+        self.text_stopped = self.font.render("Stopped", 1, (220,220,220))
+        # Initialize variable that will hold the scaled video height
+        self.scaled_height = 0
+
+    def set_running(self, enabled=True):
+        self.capture_enabled = enabled
+
+    def get_running(self):
+        return self.capture_enabled
 
     def draw(self):
-        self.bg.fill(self.bgcolor)
-        text = self.font.render(self.text, 1, self.color)
-        textpos = text.get_rect()
-        textpos.centerx = self.bg.get_rect().centerx
-        textpos.centery = self.bg.get_rect().centery
-        self.bg.blit(text, textpos)
-        screen.blit(self.bg, self.rect)
+        # Get and display MJPEG frames if video is enabled
+        if not self.capture_enabled:
+            self.bg.fill((0,0,0))
+            textpos = self.text_stopped.get_rect()
+            textpos.center = self.bg.get_rect().center
+            self.bg.blit(self.text_stopped, textpos)
+            screen.blit(self.bg, self.rect)
+        else:
+            ret, frame = self.cap.read()
+            if not ret or frame is None:
+                self.noframe_count = self.noframe_count + 1
+            else:
+                self.noframe_count = 0
+                # print("{} - frame read - {}".format(datetime.datetime.now(), ret))
+                frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+                frame = frame.swapaxes(0,1)   # replaces np.rot90(frame)
+                # Calculate scaled width and height of video
+                if self.scaled_height == 0:
+                    frame_w, frame_h = frame.shape[:2]   # getting dimensions of image, which is actually an ndarray
+                    scale_factor = self.rect.width/frame_w
+                    self.scaled_height = math.floor(frame_h * scale_factor / 2.0) * 2   # rounds down to nearest even int
+                frame = pygame.surfarray.make_surface(frame)
+                frame = pygame.transform.scale(frame,(self.rect.width,self.scaled_height))
+                screen.blit(frame, self.rect, self.rect)
+
 
 
 class Button:
-    ''' Simple Button class:  rect, label text, color, bgcolor, callback
-        Similar to TextLabel. Event handling added.
+    ''' Button class:  rect, label text, color, bgcolor, callback
     '''
     def __init__(self, rect, **kwargs):
         self.rect     = rect              # Boundary rect
@@ -213,7 +235,12 @@ class Button:
         # Create background surface
         self.bg = pygame.Surface((self.rect.width, self.rect.height)).convert()
         self.clicked = False
-        self.drawborder = False
+
+    def set_text(self, text):
+        if text is None:
+            self.text = ''
+        else:
+            self.text = text
 
     def check_event(self, event):
         '''Receive and process events from event loop'''
@@ -243,13 +270,11 @@ class Button:
         text = self.font.render(self.text, 1, self.color)
         textpos = text.get_rect()
         textpos.center = self.bg.get_rect().center
-        # textpos.centerx = self.bg.get_rect().centerx
-        # textpos.centery = self.bg.get_rect().centery
         self.bg.blit(text, textpos)
         screen.blit(self.bg, self.rect)
-        if self.drawborder:
-            print('Trying to draw border')
-            pygame.draw.rect(screen, RED, self.rect.inflate(-2,-2), 4)
+        # if self.drawborder:
+        #     print('Trying to draw border')
+        #     pygame.draw.rect(screen, RED, self.rect.inflate(-2,-2), 4)
 
 
 def draw_background():
@@ -266,7 +291,7 @@ def verify_drivers():
     disp_no = os.getenv("DISPLAY")
     if disp_no:
         print ("I'm running under X display = {0}".format(disp_no))
-    
+
     # Check which frame buffer drivers are available
     # Start with fbcon since directfb hangs with composite output
     drivers = ['fbcon', 'directfb', 'svgalib']
