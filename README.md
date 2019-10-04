@@ -1,6 +1,21 @@
 # pi-nv
 
 
+6818 Austin center blvd
+suite 100
+report in at 8am
+surgery at 9:30am
+bring picture id and ins card
+no food or water after midnight the night before
+
+Don't bring any jewelry or valuables.
+Shower that morning with antibacterial soap. Wash all over. Scrub surgical area 2-3 minutes.
+
+surgery 2 hours
+recovery 2 hours
+
+
+
 References:
 * https://hackaday.io/project/27544-night-vision-camera-raspberry-pi/details
     * https://hackaday.io/project/27544-night-vision-camera-raspberry-pi
@@ -56,6 +71,14 @@ END_OF_FILE
 ) > wpa_supplicant.conf
 ```
 
+## Add Startup/Shutdown button
+
+Since WAKE_ON_GPIO is enabled in most RPI firmware by default, shorting GPIO3 (pin 5) to GND will wake the pi from sleep or power-off.  By enabling the gpio-shutdown overlay, you can have a single button connected between pin 5 and pin 6 to get a single Start/Shutdown button.
+https://www.raspberrypi.org/forums/viewtopic.php?t=197495
+
+Add the following line to /boot/config.txt"
+`dtoverlay=gpio-shutdown,gpio_pin=3`  // gpio3 is the default pin for this overlay
+
 ## General Setup
 ```bash
 # Update apt-get and install git
@@ -90,13 +113,13 @@ git clone
 cd pi-nv
 
 # Install tools and libs
-sudo apt-get install -y --fix-missing python-pip 
-sudo apt-get install -y --fix-missing python-picamera 
-sudo apt-get install -y --fix-missing python-pygame 
+sudo apt-get install -y --fix-missing python-pip
+sudo apt-get install -y --fix-missing python-picamera
+sudo apt-get install -y --fix-missing python-pygame
 sudo apt-get install -y --fix-missing python-opencv
-sudo apt-get install -y --fix-missing python3-pip 
-sudo apt-get install -y --fix-missing python3-picamera 
-sudo apt-get install -y --fix-missing python3-pygame 
+sudo apt-get install -y --fix-missing python3-pip
+sudo apt-get install -y --fix-missing python3-picamera
+sudo apt-get install -y --fix-missing python3-pygame
 sudo apt-get install -y --fix-missing python3-opencv
 
 sudo apt-get install -y --fix-missing omxplayer vlc
@@ -111,7 +134,7 @@ mkdir -p /mnt/usb
 mount /dev/sda1 /mnt/usb
 
 # Add to opencv py script and ui.py … os.environ["SDL_FBDEV"] = "/dev/fb1”
-# Run ui.py 
+# Run ui.py
 # sudo FRAMEBUFFER=/dev/fb1 python pyscope.py
 sudo python pyscope.py
 # Run video script
@@ -135,7 +158,7 @@ res_1080p = (1920 ,1080)
 res_ultraHD_4k = (3840, 2160)
 res_ntsc = (640,360)  # (16/9)
 res_pal = (720,405)  # (16/9)
-res_hdtv = (1280,720) 
+res_hdtv = (1280,720)
 res_hdtv2 = (1920,1080)
 
 
@@ -211,14 +234,14 @@ https://medium.com/@aallan/setting-up-a-headless-raspberry-pi-zero-3ded0b83f274
 https://www.thepolyglotdeveloper.com/2016/06/connect-raspberry-pi-zero-usb-cable-ssh/
 More information on networking over USB on Linux can be found at http://www.linux-usb.org/usbnet/ .
 
-### Configure Raspbian to treat the USB port like an ethernet port. 
+### Configure Raspbian to treat the USB port like an ethernet port.
 
 * Mount the micro SD card in a computer (not Pi Zero) and open it with Finder, or Windows Explorer, or whatever it is that you use.
 * Edit `<mnt_root>/config.txt` on the mounted drive. This sets us up for the next file we need to edit
-In this file you want to add the following line at the very bottom:   
+In this file you want to add the following line at the very bottom:
 ```dtoverlay=dwc2```
 * On the mounted drive, edit `<mnt_root>/cmdline.txt`.  Note: Parameters in this file are not delimited by new lines or commas, they are delimited by space characters - so don't add extra spaces.
-After the `rootwait` parameter, add the following parameter...   
+After the `rootwait` parameter, add the following parameter...
 ```modules-load=dwc2,g_ether```
 * Enable SSH. Create a file called `ssh` and save it to the root directory of the boot mount on the SD card. The file can be blank.
 

@@ -17,12 +17,15 @@ Todo:
 * Done - Implement video transform to fill viewing area
 * Done (could be improved) - Implement button visual change when pressed
 * Add argparse to pass in the stream url and other options.
+* Attempt transparent buttons with visible text.
+* Attempt clickable icons and/or shapes
 * Update component to scale out if resolution is greater than a certain size.
 * Implement brightness slider
-* Use timeit to verify some different methods of retrieving and displaying video.
-    https://pythonhow.com/measure-execution-time-python-code/
-    https://docs.python.org/2/library/timeit.html
-    https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
+* Performance
+    Use timeit to verify some different methods of retrieving and displaying video.
+        https://pythonhow.com/measure-execution-time-python-code/
+        https://docs.python.org/2/library/timeit.html
+        https://stackoverflow.com/questions/7370801/measure-time-elapsed-in-python
     VideoCapture options
         https://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#videocapture-set
         ex. CV_CAP_PROP_CONVERT_RGB - whether or not to convert to RGB
@@ -31,7 +34,7 @@ Todo:
     Use matplotlib to generate a diagram reporting results.
 * display a splash screen until loading is done
 
-Code referenecs:
+Code references:
 https://github.com/Mekire/pygame-button
 https://github.com/facelessloser/night_vision_pi/blob/master/camera_app/camera.py
 https://learn.adafruit.com/pages/697/elements/83233/download (pyscope.py)
@@ -61,8 +64,11 @@ s_flags = 0
 if native_info.current_w < 800:
     s_res = res_native
     s_flags = pygame.FULLSCREEN
+    print("Screen setup - flags: FULLSCREEN, resolution: {}".format(s_res))
 else:
     s_res = res_800_600
+    s_flags = pygame.RESIZABLE
+    print("Screen setup - flags: RESIZABLE, resolution: {}".format(s_res))
 
 s_width  = s_res[0]
 s_height = s_res[1]
@@ -142,6 +148,7 @@ def event_loop():
 
         for c in components:
             c.draw()
+        pygame.draw.rect(screen, RED, screen.get_rect().inflate(-2,-2), 4)
         pygame.display.update()
         clock.tick(30)
 
