@@ -82,10 +82,10 @@ BRIGHT_GREEN = (0,255,0)
 BRIGHTISH_GREEN = (30,230,30)
 
 btnStartStop = None
-mjpeg_viewer = None
+video_viewer = None
 
 def main():
-    global screen, clock, btnStartStop, mjpeg_viewer
+    global screen, clock, btnStartStop, video_viewer
     "Ininitializes a new pygame screen using the framebuffer"
     verify_drivers()   # Configure and verify any rqeuired drivers
 
@@ -103,16 +103,14 @@ def main():
 
     # Add components
 
-    # Add MJPEG stream viewer
-    #   Ex. Safe public mjpeg stream for testing:  http://72.48.231.13/mjpg/video.mjpg
+    # Add PiCamera viewer
     viewer_rect = pygame.Rect(50,0,s_width-50,s_height)
-    a_url = r'http://192.168.1.36:8000/stream.mjpg'
-    mjpeg_viewer = MJPEGStreamViewer(viewer_rect, a_url)
-    components.append(mjpeg_viewer)
+    video_viewer = PicameraViewer(viewer_rect)
+    components.append(video_viewer)
 
     # Add Start Button
     btn_rect1 = pygame.Rect(4,4,45,45)
-    initial_text = "Stop" if mjpeg_viewer.get_running() == True else "Start"
+    initial_text = "Stop" if video_viewer.get_running() == True else "Start"
     btnStartStop = Button(btn_rect1,text=initial_text, callback=btnStartStop_callback)
     components.append(btnStartStop)
     event_consumers.append(btnStartStop)
@@ -122,10 +120,10 @@ def main():
 
 
 def btnStartStop_callback():
-    if mjpeg_viewer is None or btnStartStop is None:
+    if video_viewer is None or btnStartStop is None:
         return
-    mjpeg_viewer.set_running(not mjpeg_viewer.get_running())
-    running = mjpeg_viewer.get_running()
+    video_viewer.set_running(not video_viewer.get_running())
+    running = video_viewer.get_running()
     if running:
         btnStartStop.set_text("Stop")
     else:
@@ -153,22 +151,21 @@ def event_loop():
         clock.tick(30)
 
 
-class MJPEGStreamViewer:
+class PicameraViewer:
     '''
-        MJPEGStreamViewer class
+        PicameraViewer class
         Expand video frame width to fill self.rect maximally and scale height by same scale factor.
     '''
-    def __init__(self, rect, stream_url, **kwargs):
+    def __init__(self, rect, **kwargs):
         self.noframe_count = 0
         self.rect = rect
-        self.stream_url = stream_url
         self.capture_enabled = True
         if kwargs:
             for key, value in kwargs.items():
                 if   key == 'capture_enabled' : self.capture_enabled = value
 
         # Initialize stream capture
-        self.cap = cv2.VideoCapture(stream_url)
+        self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
             print("Failure opening stream - {}.".format(stream_url))
             self.capture_enabled = False

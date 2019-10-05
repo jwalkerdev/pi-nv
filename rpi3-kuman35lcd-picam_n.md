@@ -1,5 +1,11 @@
 #
 
+
+nohup python3 /home/pi/code/rpi_camera_surveillance_system.py 1>/dev/null 2>&1 &
+sleep 1
+python3 /home/pi/code/pi-nv/camera-ui/pygame/pg-stream-ui.py
+
+
 ## Install Raspbian or Raspbian Lite
 
 Write image to SD card with Etcher / Balena Etcher.
@@ -38,8 +44,21 @@ Change the language, keyboard lang, and wifi lang if you'd like.
 Since WAKE_ON_GPIO is enabled in most RPI firmware by default, shorting GPIO3 (pin 5) to GND will wake the pi from sleep or power-off.  By enabling the gpio-shutdown overlay, you can have a single button connected between pin 5 and pin 6 to get a single Start/Shutdown button.
 https://www.raspberrypi.org/forums/viewtopic.php?t=197495
 
-Add the following line to /boot/config.txt"
-`dtoverlay=gpio-shutdown,gpio_pin=3`  // gpio3 is the default pin for this overlay
+Add the following line to /boot/config.txt
+`dtoverlay=gpio-shutdown,gpio_pin=3`    // NOTE:gpio3 is the default pin for this overlay
+OR (must be logged into the pi for next command)
+`echo dtoverlay=gpio-shutdown,gpio_pin=3 | sudo tee -a /boot/config.txt`
+
+
+## Make RPi USB-bootable
+Once USB booting is enabled, it cannot be disabled.
+
+`echo program_usb_boot_mode=1 | sudo tee -a /boot/config.txt`
+
+This adds program_usb_boot_mode=1 to the end of /boot/config.txt. Reboot the Raspberry Pi with sudo reboot, then check that the OTP has been programmed with:
+
+$ `vcgencmd otp_dump | grep 17:`
+17:3020000a
 
 ### General Setup
 ```bash
@@ -48,7 +67,7 @@ sudo apt-get -y update
 sudo apt-get -y upgrade
 sudo apt-get -y dist-upgrade
 #sudo apt-get upgrade -y
-sudo apt-get install -y git python3-pip python3-dev python3-rpi.gpio python3-gpiozero
+sudo apt-get install -y git python3-pip python3-dev python3-rpi.gpio python3-gpiozero python3-picamera python3-pygame python3-opencv
 
 # Run test commands
 pinout
