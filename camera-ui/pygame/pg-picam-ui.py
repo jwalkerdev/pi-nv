@@ -18,6 +18,9 @@ Todo:
 * Done (could be improved) - Implement button visual change when pressed
 * Add argparse to pass in the stream url and other options.
 * Attempt transparent buttons with visible text.
+* Add icon to flip image orientation vertical or horizontal
+* Add icon to enable or disable mouse visibility
+* Test using Picamera classes instead of OpenCV2 code
 * Attempt clickable icons and/or shapes
 * Update component to scale out if resolution is greater than a certain size.
 * Implement brightness slider
@@ -92,6 +95,9 @@ def main():
     # Initialize clock
     clock = pygame.time.Clock()
 
+    # Disable mouse visibility
+    pygame.mouse.set_visible(False)
+
     # Initialize screen
     screen = pygame.display.set_mode((s_width, s_height), s_flags)
     pygame.display.set_caption('MJPEG Stream UI')
@@ -105,7 +111,7 @@ def main():
 
     # Add PiCamera viewer
     viewer_rect = pygame.Rect(50,0,s_width-50,s_height)
-    video_viewer = PicameraViewer(viewer_rect)
+    video_viewer = Cv2LocalCameraViewer(viewer_rect)
     components.append(video_viewer)
 
     # Add Start Button
@@ -151,21 +157,27 @@ def event_loop():
         clock.tick(30)
 
 
-class PicameraViewer:
+class Cv2LocalCameraViewer:
     '''
         PicameraViewer class
         Expand video frame width to fill self.rect maximally and scale height by same scale factor.
+        OpenCV VideoCapture properties:
+            https://docs.opencv.org/2.4/modules/highgui/doc/reading_and_writing_images_and_video.html#videocapture-set
     '''
     def __init__(self, rect, **kwargs):
         self.noframe_count = 0
         self.rect = rect
         self.capture_enabled = True
+        self.fps = 24
         if kwargs:
             for key, value in kwargs.items():
                 if   key == 'capture_enabled' : self.capture_enabled = value
 
         # Initialize stream capture
         self.cap = cv2.VideoCapture(0)
+        #self.cap.set(cv2.CAP_PROP_FPS, self.fps)
+        self.cap.set(cv2.CAP_PROP_FPS, self.fps)
+        #self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 1)
         if not self.cap.isOpened():
             print("Failure opening camera 0.")
             self.capture_enabled = False
@@ -199,9 +211,9 @@ class PicameraViewer:
             else:
                 self.noframe_count = 0
                 # print("{} - frame read - {}".format(datetime.datetime.now(), ret))
-                img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
-                img = img.swapaxes(0,1)   # replaces np.rot90(frame)
-                img = img.flipud()        # flip image array on the y-axis only
+                img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)  # no longer needed after setting CV_CAP_PROP_CONVERT_RGB
+                img = np.swapaxes(img,0,1)   # replaces np.rot90(frame)
+                img = np.flipud(img)     # flip image array on the y-axis only
                 # Calculate scaled width and height of video
                 if self.scaled_height == 0:
                     frame_w, frame_h = img.shape[:2]   # getting dimensions of image, which is actually an ndarray
