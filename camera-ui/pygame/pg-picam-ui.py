@@ -201,7 +201,7 @@ class PicameraViewer:
                 # print("{} - frame read - {}".format(datetime.datetime.now(), ret))
                 img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
                 img = img.swapaxes(0,1)   # replaces np.rot90(frame)
-                img = img.flipup()        # flip image array on the y-axis only
+                img = img.flipud()        # flip image array on the y-axis only
                 # Calculate scaled width and height of video
                 if self.scaled_height == 0:
                     frame_w, frame_h = img.shape[:2]   # getting dimensions of image, which is actually an ndarray
