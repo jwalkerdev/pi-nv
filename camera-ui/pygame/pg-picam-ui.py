@@ -21,6 +21,7 @@ Todo:
 * Add icon to flip image orientation vertical or horizontal
 * Add icon to enable or disable mouse visibility
 * Test using Picamera classes instead of OpenCV2 code
+* Build pygame from source on destination system to get v1.9.5, with touch support
 * Attempt clickable icons and/or shapes
 * Update component to scale out if resolution is greater than a certain size.
 * Implement brightness slider
@@ -52,6 +53,7 @@ os.environ["SDL_FBDEV"] = "/dev/fb0"
 
 # Initialize variables
 screen = None
+background = None
 clock = None
 components = []
 event_consumers = []
@@ -79,6 +81,7 @@ s_height = s_res[1]
 # Colors
 RED = (200,0,0)
 GREEN = (0,200,0)
+BLUE = (0,0,255)
 BLACK = (0,0,0)
 BRIGHT_RED = (255,0,0)
 BRIGHT_GREEN = (0,255,0)
@@ -96,7 +99,7 @@ def main():
     clock = pygame.time.Clock()
 
     # Disable mouse visibility
-    pygame.mouse.set_visible(False)
+    #pygame.mouse.set_visible(False)
 
     # Initialize screen
     screen = pygame.display.set_mode((s_width, s_height), s_flags)
@@ -105,7 +108,7 @@ def main():
     # Draw and blit background and text
     draw_background()
     # Draw Initial Screen
-    pygame.display.flip()
+    pygame.display.update()
 
     # Add components
 
@@ -138,20 +141,27 @@ def btnStartStop_callback():
 
 def event_loop():
     # Event loop
+    click_pos = None
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
+                video_viewer.release()
             elif event.type == KEYDOWN:
                 if event.key == K_q:
                     running = False
+                    video_viewer.release()
+            if event.type == MOUSEBUTTONDOWN or event.type == MOUSEMOTION:
+                click_pos = event.pos
             for ec in event_consumers:
                 ec.check_event(event)
 
-
+        draw_background()
         for c in components:
             c.draw()
+        if click_pos:
+            pygame.draw.rect(screen, BLUE, (click_pos[0]-5,click_pos[1]-5, 20, 20))
         pygame.draw.rect(screen, RED, screen.get_rect().inflate(-2,-2), 4)
         pygame.display.update()
         clock.tick(30)
@@ -175,7 +185,6 @@ class Cv2LocalCameraViewer:
 
         # Initialize stream capture
         self.cap = cv2.VideoCapture(0)
-        #self.cap.set(cv2.CAP_PROP_FPS, self.fps)
         self.cap.set(cv2.CAP_PROP_FPS, self.fps)
         #self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 1)
         if not self.cap.isOpened():
@@ -195,6 +204,9 @@ class Cv2LocalCameraViewer:
     def get_running(self):
         return self.capture_enabled
 
+    def release(self):
+        self.cap.release()
+
     def draw(self):
         # Get and display MJPEG frames (images) if video is enabled
         # image returned by CV2 is a numpy array
@@ -212,8 +224,10 @@ class Cv2LocalCameraViewer:
                 self.noframe_count = 0
                 # print("{} - frame read - {}".format(datetime.datetime.now(), ret))
                 img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)  # no longer needed after setting CV_CAP_PROP_CONVERT_RGB
+                #img = np.rot90(img, 3)
                 img = np.swapaxes(img,0,1)   # replaces np.rot90(frame)
                 img = np.flipud(img)     # flip image array on the y-axis only
+                img = np.fliplr(img)     # flip image array on the y-axis only, using fliplr because we already swapped axes
                 # Calculate scaled width and height of video
                 if self.scaled_height == 0:
                     frame_w, frame_h = img.shape[:2]   # getting dimensions of image, which is actually an ndarray
@@ -253,25 +267,51 @@ class Button:
             self.text = text
 
     def check_event(self, event):
-        '''Receive and process events from event loop'''
+        ''' Receive and process events from event loop.
+            Events handled:
+              MOUSEBUTTONUP     pos, button
+              MOUSEBUTTONDOWN   pos, button
+              FINGERDOWN         touch_id, finger_id, x, y, dx, dy
+              FINGERUP           touch_id, finger_id, x, y, dx, dy
+            NOTE: FINGERDOWN and FINGERUP events not supported until pygame 1.9.5
+        '''
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self.handle_mousedown(event)
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             self.handle_mouseup(event)
+        # elif event.type == FINGERDOWN:
+        #     self.handle_fingerdown(event)
+        # elif event.type == FINGERUP:
+        #     self.handle_fingerup(event)
 
     def handle_mousedown(self, event):
-        '''Handle mouse down event'''
+        '''Handle mousedown event'''
         #print('Mouse down')
         if self.rect.collidepoint(event.pos):
             self.clicked = True
             print('{} - Button click detected'.format(self.text))
 
     def handle_mouseup(self, event):
-        '''Handle mouse up event. By default, callback function is called on mouse up.'''
+        '''Handle mouse up event. By default, callback function is called on mouse/finger up.'''
         if self.clicked:
             if not self.callback == None:
                 self.callback()
         self.clicked = False
+
+    # def handle_fingerdown(self, event):
+    #     '''Handle fingerdown event'''
+    #     #print('Finger down')
+    #     event_pos = (event.x, event.y)
+    #     if self.rect.collidepoint(event_pos):
+    #         self.clicked = True
+    #         print('{} - Finger down (click) detected'.format(self.text))
+
+    # def handle_fingerup(self, event):
+    #     '''Handle finger up event. By default, callback function is called on mouse/finger up.'''
+    #     if self.clicked:
+    #         if not self.callback == None:
+    #             self.callback()
+    #     self.clicked = False
 
     def draw(self):
         # Add border if selected
@@ -288,9 +328,10 @@ class Button:
 
 
 def draw_background():
+    global background
     # Fill background
-    background = pygame.Surface(screen.get_size())
-    background = background.convert()
+    if not background:
+        background = pygame.Surface(screen.get_size()).convert()
     background.fill(BLACK)
     screen.blit(background, (0, 0))
 
@@ -315,9 +356,7 @@ def verify_drivers():
         except pygame.error:
             print('Driver: {0} failed.'.format(driver))
             continue
-        found = True
-        break
-
+    found = True
     if not found:
         raise Exception('No suitable video driver found!')
 
