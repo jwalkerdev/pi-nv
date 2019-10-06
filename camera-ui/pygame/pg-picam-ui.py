@@ -160,8 +160,8 @@ def event_loop():
         draw_background()
         for c in components:
             c.draw()
-        if click_pos:
-            pygame.draw.rect(screen, BLUE, (click_pos[0]-5,click_pos[1]-5, 20, 20))
+        # if click_pos:
+        #     pygame.draw.rect(screen, BLUE, (click_pos[0]-5,click_pos[1]-5, 20, 20))
         pygame.draw.rect(screen, RED, screen.get_rect().inflate(-2,-2), 4)
         pygame.display.update()
         clock.tick(30)
