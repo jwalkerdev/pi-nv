@@ -167,7 +167,7 @@ class PicameraViewer:
         # Initialize stream capture
         self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
-            print("Failure opening stream - {}.".format(stream_url))
+            print("Failure opening camera 0.")
             self.capture_enabled = False
         # Initialize font for stopped capture
         self.font = pygame.font.Font(None, int(self.rect.width / 12))
@@ -184,7 +184,8 @@ class PicameraViewer:
         return self.capture_enabled
 
     def draw(self):
-        # Get and display MJPEG frames if video is enabled
+        # Get and display MJPEG frames (images) if video is enabled
+        # image returned by CV2 is a numpy array
         if not self.capture_enabled:
             self.bg.fill((0,0,0))
             textpos = self.text_stopped.get_rect()
@@ -192,20 +193,21 @@ class PicameraViewer:
             self.bg.blit(self.text_stopped, textpos)
             screen.blit(self.bg, self.rect)
         else:
-            ret, frame = self.cap.read()
-            if not ret or frame is None:
+            ret, img = self.cap.read()
+            if not ret or img is None:
                 self.noframe_count = self.noframe_count + 1
             else:
                 self.noframe_count = 0
                 # print("{} - frame read - {}".format(datetime.datetime.now(), ret))
-                frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-                frame = frame.swapaxes(0,1)   # replaces np.rot90(frame)
+                img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+                img = img.swapaxes(0,1)   # replaces np.rot90(frame)
+                img = img.flipup()        # flip image array on the y-axis only
                 # Calculate scaled width and height of video
                 if self.scaled_height == 0:
-                    frame_w, frame_h = frame.shape[:2]   # getting dimensions of image, which is actually an ndarray
+                    frame_w, frame_h = img.shape[:2]   # getting dimensions of image, which is actually an ndarray
                     scale_factor = self.rect.width/frame_w
                     self.scaled_height = math.floor(frame_h * scale_factor / 2.0) * 2   # rounds down to nearest even int
-                frame = pygame.surfarray.make_surface(frame)
+                frame = pygame.surfarray.make_surface(img)
                 frame = pygame.transform.scale(frame,(self.rect.width,self.scaled_height))
                 screen.blit(frame, self.rect, self.rect)
 
