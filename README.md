@@ -1,21 +1,6 @@
 # pi-nv
 
 
-6818 Austin center blvd
-suite 100
-report in at 8am
-surgery at 9:30am
-bring picture id and ins card
-no food or water after midnight the night before
-
-Don't bring any jewelry or valuables.
-Shower that morning with antibacterial soap. Wash all over. Scrub surgical area 2-3 minutes.
-
-surgery 2 hours
-recovery 2 hours
-
-
-
 References:
 * https://hackaday.io/project/27544-night-vision-camera-raspberry-pi/details
     * https://hackaday.io/project/27544-night-vision-camera-raspberry-pi
