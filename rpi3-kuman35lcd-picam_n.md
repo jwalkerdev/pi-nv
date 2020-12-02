@@ -4,6 +4,17 @@
 nohup python3 /home/pi/code/rpi_camera_surveillance_system.py 1>/dev/null 2>&1 &
 sleep 1
 python3 /home/pi/code/pi-nv/camera-ui/pygame/pg-stream-ui.py
+---
+git -C /home/pi/code/pi-nv
+python3 /home/pi/code/pi-nv/camera-ui/pygame/pg-picam-ui.py
+---
+mkdir /home/pi/.config/autostart
+nano /home/pi/.config/autostart/pg-picam-ui.desktop
+# contents of pg-picam-ui.desktop
+[Desktop Entry]
+Type=Application
+Name=Picam-UI
+Exec=/usr/bin/python3 /home/pi/code/pi-nv/camera-ui/pygame/pg-picam-ui.py
 
 
 ## Install Raspbian or Raspbian Lite
@@ -104,6 +115,18 @@ hdmi_mode=87
 hdmi_cvt 480 320 60 6 0 0 0
 ```
 
+Maybe?
+```
+hdmi_drive=2
+hdmi_force_hotplug=1
+hdmi_group=2
+hdmi_mode=87
+hdmi_cvt 480 320 60 6 0 0 0
+dtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=0,pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900
+start_x=1
+gpu_mem=128
+```
+
 #### Reboot the pi
 
 #### Install drivers and enable LCD
@@ -165,3 +188,12 @@ You can set a 120 second idle timeout with a single call of:
 
 xset dpms 120 120 120
 and can then remove the force off from the python.
+
+
+### Configure pi for use with usb pi zero dongle
+After mounting microsd, with os installed for the pi, into USB
+1. Edit cmdline.txt in the boot folder/partition. Add "modules-load=dwc2,g_ether" after "rootwait"
+2. Create a new file named "ssh" in the boot folder.
+3. Eject microSD from computer, plug it into the pi zero
+4. Plug pizero usb dongle into usb port of computer and wait for it to complete booting
+5. Should be able to ssh into "raspberrypi.local". Ex. `ssh pi@raspberrypi.local`.

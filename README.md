@@ -68,6 +68,9 @@ Add the following line to /boot/config.txt"
 ```bash
 # Update apt-get and install git
 sudo apt-get update
+
+sudo apt update
+sudo apt upgrade -y
 #sudo apt-get upgrade -y
 sudo apt-get install -y git
 # Install pip
@@ -94,7 +97,6 @@ pinout -r 9000c1
 mkdir -p ~/code
 cd ~/code
 git clone https://github.com/jwalkerdev/pi-nv.git
-git clone
 cd pi-nv
 
 # Install tools and libs
