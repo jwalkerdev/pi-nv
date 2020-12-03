@@ -66,52 +66,23 @@ Add the following line to /boot/config.txt"
 
 ## General Setup
 ```bash
-# Update apt-get and install git
-sudo apt-get update
-
-sudo apt update
-sudo apt upgrade -y
-#sudo apt-get upgrade -y
+# Install git
 sudo apt-get install -y git
-# Install pip
-sudo apt-get install -y python-pip python3-pip
-
-# Install RPi.GPIO
-sudo apt-get install -y python-dev python-rpi.gpio python3-dev python3-rpi.gpio
-# Install gpiozero for the tools and libs
-sudo apt-get install -y python-gpiozero python3-gpiozero
-
-# Run test commands
-pinout
-pinout --monochrome
-# Or forced to be --color, in case you are redirecting to something capable of supporting ANSI codes:
-pinout --color | less -SR
-# Can check pinout for any particular pi version
-# https://elinux.org/RPi_HardwareHistory
-# Ex. check pinout on pi 3B+
-pinout -r a020d3
-# Ex. check pinout on pi zero W
-pinout -r 9000c1
 
 # Get project code
 mkdir -p ~/code
 cd ~/code
 git clone https://github.com/jwalkerdev/pi-nv.git
-cd pi-nv
+# Run and use setup script
+cp pi-nv/files/setup.sh .
+chmod +x ./setup.sh
+sudo ./setup.sh
 
-# Install tools and libs
-sudo apt-get install -y --fix-missing python-pip
-sudo apt-get install -y --fix-missing python-picamera
-sudo apt-get install -y --fix-missing python-pygame
-sudo apt-get install -y --fix-missing python-opencv
-sudo apt-get install -y --fix-missing python3-pip
-sudo apt-get install -y --fix-missing python3-picamera
-sudo apt-get install -y --fix-missing python3-pygame
-sudo apt-get install -y --fix-missing python3-opencv
-
-sudo apt-get install -y --fix-missing omxplayer vlc
-sudo apt --fix-broken -y install
-sudo apt-get install -y --fix-missing omxplayer vlc
+# Run the ui
+cd
+cp code/pi-nv/files/run.sh .
+chmod +x ./run.sh
+./run.sh
 ```
 
 ## Optional Pi Setup Steps (used for testing and misc tasks)
