@@ -19,7 +19,7 @@ sudo apt --fix-broken -y install
 (
 cat <<'END_OF_CONTENT'
 #!/bin/bash
-sudo python3 /home/pi/code/pi-nv/camera-ui/pygame/pg-picam-ui.py
+sudo python3 /home/pi/code/pi-nv/src/camera-ui/pg-picam-ui.py
 END_OF_CONTENT
 ) > ~/run.sh
 chmod +x ~/run.sh
