@@ -2,8 +2,11 @@
 
 sudo apt update
 sudo apt upgrade -y
-#sudo apt-get upgrade -y
-sudo apt-get install -y git
+
+# Just enough x windows to correctly run pygame with touch input
+#sudo apt-get install --no-install-recommends xorg
+
+
 # Install pip
 sudo apt-get install -y python-pip python3-pip
 

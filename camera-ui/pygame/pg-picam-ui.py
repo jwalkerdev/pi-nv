@@ -5,6 +5,7 @@ import cv2
 import numpy as np
 import datetime
 import math
+import sys
 
 '''
 UI Layout:
@@ -12,17 +13,17 @@ Tall thin left panel: Leftmost 10-20% of screen
     Contains buttons: stop_preview, start_preview, save_image
 Remaining screen used for video display
 
+Done:
+* Implement video start/stop buttons
+* Implement video transform to fill viewing area
+* Implement button text change when pressed
+
 Todo:
-* Done - Implement video start/stop buttons
-* Done - Implement video transform to fill viewing area
-* Done (could be improved) - Implement button visual change when pressed
-* Add argparse to pass in the stream url and other options.
-* Attempt transparent buttons with visible text.
+* Brightness control (does appeaer to be available on kuman 3.5 lcd)
 * Add icon to flip image orientation vertical or horizontal
-* Add icon to enable or disable mouse visibility
-* Test using Picamera classes instead of OpenCV2 code
-* Build pygame from source on destination system to get v1.9.5, with touch support
-* Attempt clickable icons and/or shapes
+* Improve debug options
+
+* Clickable icons and/or shapes
 * Update component to scale out if resolution is greater than a certain size.
 * Implement brightness slider
 * Performance
@@ -45,7 +46,7 @@ https://learn.adafruit.com/pages/697/elements/83233/download (pyscope.py)
 https://github.com/adafruit/adafruit-pi-cam
 '''
 
-# Either find the correct framebuffer device (/dev/fb0 or /dev/fb1) and set
+# Find the correct framebuffer device (/dev/fb0 or /dev/fb1) and set
 #   it here or set it as an env variable.
 # Before running, on command line, set env var DISPLAY. Run `export DISPLAY=0:0` or `export DISPLAY=:0`
 #   or set it here.
@@ -57,26 +58,9 @@ background = None
 clock = None
 components = []
 event_consumers = []
-
-# Initialize pygame
-pygame.init()
-
-# Get native display info from display.Info() by calling it before running first display.set_mode()
-native_info = pygame.display.Info()
-res_native = (native_info.current_w, native_info.current_h)
-res_800_600 = (800,600)
-s_flags = 0
-if native_info.current_w < 800:
-    s_res = res_native
-    s_flags = pygame.FULLSCREEN
-    print("Screen setup - flags: FULLSCREEN, resolution: {}".format(s_res))
-else:
-    s_res = res_800_600
-    s_flags = pygame.RESIZABLE
-    print("Screen setup - flags: RESIZABLE, resolution: {}".format(s_res))
-
-s_width  = s_res[0]
-s_height = s_res[1]
+btnStartStop = None
+video_viewer = None
+flip_mouse_event_xy = True
 
 # Colors
 RED = (200,0,0)
@@ -87,48 +71,99 @@ BRIGHT_RED = (255,0,0)
 BRIGHT_GREEN = (0,255,0)
 BRIGHTISH_GREEN = (30,230,30)
 
-btnStartStop = None
-video_viewer = None
 
 def main():
-    global screen, clock, btnStartStop, video_viewer
-    "Ininitializes a new pygame screen using the framebuffer"
-    verify_drivers()   # Configure and verify any rqeuired drivers
+    global screen, clock
+    # Configure and verify any rqeuired drivers
+    verify_drivers()
 
+    # Initialize pygame
+    pygame.init()
     # Initialize clock
     clock = pygame.time.Clock()
-
     # Disable mouse visibility
-    #pygame.mouse.set_visible(False)
+    pygame.mouse.set_visible(False)
+    # Ininitializes a new pygame screen using the framebuffer
+    screen = build_screen()
 
+    pygame.display.set_caption('Pi Cam')
+    draw_background()         # Draw and blit background and text
+    pygame.display.update()   # Draw Initial Screen
+    add_components()
+    event_loop()              # Run event loop
+    video_viewer.release()
+    sys.exit(0)
+
+
+'''
+Build initial pygame screen object.
+Get available modes from pygame.display.list_modes() and use the smallest mode > 480x320
+'''
+def build_screen():
+    # Defaults
+    my_res = (640,480)
     # Initialize screen
-    screen = pygame.display.set_mode((s_width, s_height), s_flags)
-    pygame.display.set_caption('MJPEG Stream UI')
+    modes = pygame.display.list_modes()
+    if modes:
+        print("modes found")
+        print(modes)
+        my_res = next(iter([item for item in reversed(modes) if item[0] > 480]))
 
-    # Draw and blit background and text
-    draw_background()
-    # Draw Initial Screen
-    pygame.display.update()
+    s_flags = pygame.FULLSCREEN
+    if my_res[0] > 1000:
+        s_flags = pygame.RESIZABLE
 
-    # Add components
+    print("Initializing screen at {}x{}".format(my_res[0],my_res[1]))
+    screen = pygame.display.set_mode(my_res, s_flags)
+
+    return screen
+
+
+'''
+Obsoleted due to inaccuracy of display.Info() when not using x windows
+'''
+def build_screen_with_display_info():
+    # Get native display info from display.Info() by calling it before running first display.set_mode()
+    # NOTE: sometimes display.Info() is not accurate, in particular without x windows, while using framebuffer
+    s_res = (800,600)
+    s_flags = 0
+
+    native_info = pygame.display.Info()
+    res_native = (native_info.current_w, native_info.current_h)
+    if native_info.current_w < 800:
+        s_res = res_native
+        s_flags = pygame.FULLSCREEN
+        print("Screen setup - flags: FULLSCREEN, resolution: {}".format(s_res))
+    else:
+        # Since resizable, adjust viewing area to be smaller than full screen
+        res_tmp = s_res
+        s_res = (int(res_tmp[0]*0.8), int(res_tmp[1]*0.8))
+        s_flags = pygame.RESIZABLE
+        print("Screen setup - flags: RESIZABLE, resolution: {}".format(s_res))
+    screen = pygame.display.set_mode(s_res, s_flags)
+    return screen
+
+
+def add_components():
+    global video_viewer, components, event_consumers, btnStartStop
+    s_width = screen.get_size()[0]
+    s_height = screen.get_size()[1]
 
     # Add PiCamera viewer
-    viewer_rect = pygame.Rect(50,0,s_width-50,s_height)
+    viewer_rect = pygame.Rect((0,0),screen.get_size())
     video_viewer = Cv2LocalCameraViewer(viewer_rect)
     components.append(video_viewer)
 
     # Add Start Button
-    btn_rect1 = pygame.Rect(4,4,45,45)
+    btn_rect1 = pygame.Rect(4,4,int(s_width*0.1),int(s_height*0.1))
     initial_text = "Stop" if video_viewer.get_running() == True else "Start"
     btnStartStop = Button(btn_rect1,text=initial_text, callback=btnStartStop_callback)
     components.append(btnStartStop)
     event_consumers.append(btnStartStop)
 
-    # Run event loop
-    event_loop()
-
 
 def btnStartStop_callback():
+    global video_viewer, btnStartStop
     if video_viewer is None or btnStartStop is None:
         return
     video_viewer.set_running(not video_viewer.get_running())
@@ -139,6 +174,22 @@ def btnStartStop_callback():
         btnStartStop.set_text("Start")
 
 
+def shutdown():
+    # release camera. If this isn't done, pi may need to be rebooted before it can be used again
+    video_viewer.release()
+    sys.exit(0)
+
+
+def translate_click_pos(orig_pos):
+    global screen, flip_mouse_event_xy
+    if not flip_mouse_event_xy:
+        pos = orig_pos
+    else:
+        print("swapping click pos x and y")
+        pos = (screen.get_size()[0] - orig_pos[0], screen.get_size()[1] - orig_pos[1])
+    return pos
+
+
 def event_loop():
     # Event loop
     click_pos = None
@@ -147,20 +198,18 @@ def event_loop():
         for event in pygame.event.get():
             if event.type == QUIT:
                 running = False
-                video_viewer.release()
             elif event.type == KEYDOWN:
                 if event.key == K_q:
                     running = False
-                    video_viewer.release()
             if event.type == MOUSEBUTTONDOWN or event.type == MOUSEMOTION:
-                click_pos = event.pos
+                click_pos = translate_click_pos(event.pos)
             for ec in event_consumers:
                 ec.check_event(event)
 
         draw_background()
         for c in components:
             c.draw()
-        # if click_pos:
+        #if click_pos:
         #     pygame.draw.rect(screen, BLUE, (click_pos[0]-5,click_pos[1]-5, 20, 20))
         pygame.draw.rect(screen, RED, screen.get_rect().inflate(-2,-2), 4)
         pygame.display.update()
@@ -238,7 +287,6 @@ class Cv2LocalCameraViewer:
                 screen.blit(frame, self.rect, self.rect)
 
 
-
 class Button:
     ''' Button class:  rect, label text, color, bgcolor, callback
     '''
@@ -255,7 +303,7 @@ class Button:
                 elif key == 'text'     : self.text     = value
                 elif key == 'callback' : self.callback = value
         # Create font
-        self.font = pygame.font.Font(None, 16)
+        self.font = pygame.font.Font(None, int(screen.get_size()[1]/20))
         # Create background surface
         self.bg = pygame.Surface((self.rect.width, self.rect.height)).convert()
         self.clicked = False
@@ -287,9 +335,9 @@ class Button:
     def handle_mousedown(self, event):
         '''Handle mousedown event'''
         #print('Mouse down')
-        if self.rect.collidepoint(event.pos):
+        if self.rect.collidepoint(translate_click_pos(event.pos)):
             self.clicked = True
-            print('{} - Button click detected'.format(self.text))
+            print('{} - Button click detected at {}'.format(self.text, translate_click_pos(event.pos)))
 
     def handle_mouseup(self, event):
         '''Handle mouse up event. By default, callback function is called on mouse/finger up.'''
