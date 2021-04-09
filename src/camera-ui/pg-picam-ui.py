@@ -364,6 +364,8 @@ class Button:
     def draw(self):
         # Add border if selected
         self.bg.fill(self.bgcolor)
+        # Create invisible cursor to use mouse pointer but not see it.
+        pygame.mouse.set_cursor((8,8),(0,0),(0,0,0,0,0,0,0,0),(0,0,0,0,0,0,0,0))
         # Add text
         text = self.font.render(self.text, 1, self.color)
         textpos = text.get_rect()
